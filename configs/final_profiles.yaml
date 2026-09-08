@@ -1,0 +1,50 @@
+package: SiteWeaver
+version: 0.1.0
+profiles:
+  pocket:
+    checkpoint: weights/ligand_free_pocket_final.ckpt
+    task: binding-pocket residue probability
+    architecture: 8-layer ligand-free YuelPocket GNN
+    node_features: 29
+    edge_features: 5
+  active_site:
+    checkpoint: weights/active_site_final.ckpt
+    task: active/functional-site residue probability
+    architecture: 8-layer residue GNN
+    node_features: 29 base features + ligand-free pocket probability
+    edge_features: 5
+  allosteric_residue_rank:
+    checkpoint: weights/allosteric_residue_rank_final.ckpt
+    label: SW-Allo-R
+    task: direct residue-level allosteric ranking
+    architecture: 16-layer full-atom residue ranker
+    node_features: 14 heavy-atom graph features including pocket and annotated active context
+    edge_features: 21
+    checkpoint_epoch: 14
+  allosteric_pocket_rank:
+    checkpoint: weights/allosteric_pocket_rank_final.ckpt
+    label: SW-Allo-P/G1
+    task: FPocket candidate-pocket ranking
+    architecture: 16-layer full-protein GNN with one pocket node per FPocket candidate
+    node_features: 25
+    edge_features: 22
+    checkpoint_epoch: 20
+    cache_required: true
+  allosteric_prs_research:
+    checkpoint: weights/allosteric_prs_research_epoch98.ckpt
+    task: optional PRS-enabled residue ranker for collaborator parameter studies
+    architecture: 8-layer residue ranker with directional CA-only PRS channels
+    cache_required: false
+    checkpoint_epoch: 98
+  active_context:
+    checkpoint: weights/active_context_final.ckpt
+    task: upstream active-context model used by the optional PRS-enabled branch
+    architecture: 8-layer residue GNN
+    node_features: 29
+    checkpoint_epoch: 96
+  cryptic_site:
+    checkpoint: weights/cryptic_site_final.ckpt
+    task: cryptic-site residue probability
+    architecture: 8-layer residue GNN
+    node_features: 29 base features + ligand-free pocket probability
+    edge_features: 5

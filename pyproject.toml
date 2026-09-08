@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "siteweaver"
+version = "0.1.0"
+description = "Self-contained protein site prediction and pocket ranking models"
+requires-python = ">=3.10"
+readme = "README.md"
+dependencies = [
+  "torch>=2.0",
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "prody>=2.4",
+  "zstandard>=0.22",
+]
+
+[project.scripts]
+siteweaver = "siteweaver.cli:main"
+siteweaver-cache = "siteweaver.cache_predict:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.data-files]
+"siteweaver/weights" = ["weights/*.ckpt", "weights/manifest.json"]
+"siteweaver/configs" = ["configs/*.yaml"]

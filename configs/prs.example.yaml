@@ -1,0 +1,11 @@
+# Parameters for collaborator PRS studies. These values document the
+# directional CA-only feature contract used by the optional PRS profile.
+mode: directional_ca_only
+active_probability_source: annotated_or_predicted_active_site_probability
+contact_cutoff_angstrom: 8.0
+normalization: per_structure_zscore
+channels:
+  - active_to_all_residue_perturbation
+  - uniform_perturbation_to_all_residue_response
+  - directional_active_to_all_response
+feature_dtype: float32

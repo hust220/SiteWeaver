@@ -1,0 +1,8 @@
+include README.md
+include requirements-runtime.txt
+include configs/*.yaml
+include release/*.json
+include weights/*.ckpt
+include weights/manifest.json
+recursive-include src/siteweaver *.py
+recursive-include examples *.pdb

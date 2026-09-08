@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.venv/
+venv/
+wandb/
+logs/
+outputs/
+/cache/
+*.ptzst
+*.tar.zst
+*.tar.gz
+*.npy
+*.npz

@@ -1,0 +1,49 @@
+{
+  "package": "SiteWeaver",
+  "version": "0.1.0",
+  "weights_are_frozen": true,
+  "files": [
+    {
+      "file": "ligand_free_pocket_final.ckpt",
+      "sha256": "7b82427553a9dc0a09d9cf2d9d117ce89a2efc00b7514a65c41acca34dd14b25",
+      "source_profile": "ligand-free pocket predictor",
+      "epoch": 23
+    },
+    {
+      "file": "active_site_final.ckpt",
+      "sha256": "a7c4a98abd1c333471192d4480329b3b42d1a515700abcba91b212df4b1aa2fe",
+      "source_profile": "active-site predictor using ligand-free pocket probability",
+      "epoch": 81
+    },
+    {
+      "file": "active_context_final.ckpt",
+      "sha256": "9dadc5584746c26050133f6da7fb0704769992a4a7b477e97284ad7f78c09156",
+      "source_profile": "base-only active-context predictor",
+      "epoch": 96
+    },
+    {
+      "file": "allosteric_residue_rank_final.ckpt",
+      "sha256": "1eb4169adb18557e8ae3ecfc62c49fe32aecd6858a70330ba5d5bfdcd68234d5",
+      "source_profile": "SW-Allo-R / R0 keep-overlap residue ranker",
+      "epoch": 14
+    },
+    {
+      "file": "allosteric_pocket_rank_final.ckpt",
+      "sha256": "0bf752d1115858ca3523fe5c3540ffd36790f35ddf8f2c0abdeb207b88d9c31b",
+      "source_profile": "SW-Allo-P/G1 FPocket pocket-node ranker",
+      "epoch": 20
+    },
+    {
+      "file": "allosteric_prs_research_epoch98.ckpt",
+      "sha256": "5989e73d9b7f7f3ae18b2b79bd15481531c5a989e2b9db2fcbad63c3ad83a562",
+      "source_profile": "optional I01 directional CA-only PRS research ranker",
+      "epoch": 98
+    },
+    {
+      "file": "cryptic_site_final.ckpt",
+      "sha256": "964eb1e62d078dde6391a4fcf2d330afc0efd2b101a2de5e56907409b2bd37e0",
+      "source_profile": "cryptic-site predictor using ligand-free pocket probability",
+      "epoch": 41
+    }
+  ]
+}

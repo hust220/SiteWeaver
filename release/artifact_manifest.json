@@ -1,0 +1,50 @@
+{
+  "package": "SiteWeaver",
+  "version": "0.1.0",
+  "repository_payload": {
+    "source": "software/SiteWeaver/src",
+    "selected_weights": "software/SiteWeaver/weights",
+    "manuscript_included": false,
+    "training_cache_included": false,
+    "wandb_included": false
+  },
+  "external_assets": [
+    {
+      "name": "g1_pocket_node_cache",
+      "logical_path": "cache/siteweaver_g1_pocket_node_v1",
+      "samples": 1160,
+      "size_bytes": 5005869174,
+      "sha256": "136472c4ff84cd00b5ef35f1a205169b10a3abd6669450e306360ff202453504",
+      "status": "to_upload",
+      "url": null
+    },
+    {
+      "name": "r0_prs_cache",
+      "logical_path": "cache/siteweaver_r0_prs_with_pocket_v1",
+      "samples": 1160,
+      "size_bytes": 4899143716,
+      "sha256": "54718d245baf67640d7ba958c9eaa319587ac52354369150208ddcfe4a6ed1e4",
+      "status": "to_upload",
+      "url": null
+    },
+    {
+      "name": "r0_heavy_atom_cache",
+      "logical_path": "cache/siteweaver_r0_heavy_atom_v1",
+      "samples": 1160,
+      "size_bytes": 4889546140,
+      "sha256": "4c3d971b98332ee381cc5dcab4ed82b015ce543b63158c90b285d8ff8a437c14",
+      "status": "to_upload",
+      "url": null
+    },
+    {
+      "name": "prs_inputs",
+      "logical_path": "data/prs_inputs_v1",
+      "status": "planned",
+      "url": null
+    }
+  ],
+  "split_registries": [
+    "allobench_paper_set_shared_val_test_v1.csv",
+    "allobench_paper_set_both_val_test_full_v1.csv"
+  ]
+}

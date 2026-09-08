@@ -1,0 +1,4 @@
+SiteWeaver contains a protein graph backbone derived from the YuelPocket
+implementation. Retain upstream attribution and license terms when sharing
+this package. The bundled model weights are research artifacts; see
+weights/manifest.json and release/artifact_manifest.json for provenance.
