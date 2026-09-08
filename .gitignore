@@ -13,3 +13,5 @@ outputs/
 *.tar.gz
 *.npy
 *.npz
+release/*.tar.gz
+release/*.sha256
