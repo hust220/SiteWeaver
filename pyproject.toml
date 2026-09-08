@@ -19,6 +19,8 @@ dependencies = [
 [project.scripts]
 siteweaver = "siteweaver.cli:main"
 siteweaver-cache = "siteweaver.cache_predict:main"
+siteweaver-prs = "siteweaver.tools.prs:main"
+siteweaver-fpocket = "siteweaver.tools.fpocket:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

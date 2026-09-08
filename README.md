@@ -62,6 +62,55 @@ is a single `data.packed.ptzst` plus `manifest.json`; the complete cache is
 distributed separately because it is about 4.7 GB. The R0 residue ranker can
 be run on the matching full-atom cache with `--mode residue`.
 
+## Optional FPocket and PRS adapters
+
+FPocket and ProDy are intentionally not bundled as third-party executables.
+The package does provide the exact invocation and feature-generation adapters
+used for the study.
+
+Run FPocket on one structure, or on a CSV containing `complex_id,pdb_path`:
+
+```bash
+siteweaver-fpocket \
+  --fpocket-bin /path/to/fpocket \
+  --pdb /path/to/protein.pdb \
+  --out-dir /path/to/fpocket_outputs
+```
+
+For a batch, replace `--pdb` with `--manifest manifest.csv`. The adapter
+copies each PDB into `<out-dir>/<complex_id>/`, runs `fpocket -f <local>.pdb`,
+expects `<complex_id>_out/pockets/`, uses eight workers by default, reuses
+completed outputs, and records the command, input hash, FPocket probe output,
+and log path in `fpocket_run.json`.
+
+Generate the three PRS channels after producing an active-probability table:
+
+```bash
+siteweaver-prs \
+  --pdb /path/to/protein.pdb \
+  --active-scores /path/to/active_context_scores.csv \
+  --out-dir /path/to/prs_output
+```
+
+The active-score CSV must contain `chain_id,residue_number,insertion_code`
+and `probability`. The default parameters reproduce the project workflow:
+protein `CA` atoms only, ANM cutoff 15 A, gamma 1.0, 20 modes, dense ProDy
+calculation up to 1,200 residues, and the sparse low-rank fallback above that
+size. Outputs are `prs_features.csv`, `prs_features.npy`, and
+`prs_metadata.json`; the three columns are active-to-residue response,
+residue-to-active response, and their directional difference. To reproduce
+the allosteric path exactly, create the CSV with:
+
+```bash
+siteweaver --pdb /path/to/protein.pdb \
+  --out-dir /path/to/active_context_output \
+  --task active_context
+```
+
+Changing `--cutoff`, `--gamma`, `--n-modes`, or `--chain` is supported and is
+recorded in the metadata. The adapters never assume a dataset path and never
+silently substitute a missing external executable.
+
 Cache records already contain graph features and the precomputed upstream
 channels. `r0_prs_with_pocket_v1` contains the three directional CA-only PRS
 channels and is the recommended starting point for PRS parameter studies.

@@ -334,7 +334,7 @@ class SiteWeaverPredictor:
         task = str(task).lower()
         aliases = {"active": "active_site", "allosteric_site": "allosteric", "cryptic_site": "cryptic"}
         task = aliases.get(task, task)
-        valid = {"all", "pocket", "active_site", "allosteric", "cryptic"}
+        valid = {"all", "pocket", "active_site", "active_context", "allosteric", "cryptic"}
         if task not in valid:
             raise ValueError(f"task must be one of {sorted(valid)}")
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -360,10 +360,21 @@ class SiteWeaverPredictor:
             )
         else:
             active_probability = None
-        if task in {"all", "allosteric"}:
+        active_context_probability = None
+        if task in {"all", "active_context"}:
             active_context_probability = self._site_probability(
                 "active_context", graph, base_features, n_residues
             )
+            if task == "active_context":
+                results["active_context"] = self._write_task(
+                    "active_context", pdb_path, out_dir, residue_meta, active_context_probability,
+                    "probability", (active_context_probability.detach().cpu().numpy() * 100.0),
+                )
+        if task in {"all", "allosteric"}:
+            if active_context_probability is None:
+                active_context_probability = self._site_probability(
+                    "active_context", graph, base_features, n_residues
+                )
             allosteric_score, prs_stats = self._allosteric_score(
                 pdb_path, graph, residue_meta, base_features, n_residues, active_context_probability
             )

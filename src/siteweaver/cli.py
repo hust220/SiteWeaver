@@ -25,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--task",
         default="all",
-        choices=["all", "pocket", "active_site", "allosteric", "cryptic"],
+        choices=["all", "pocket", "active_site", "active_context", "allosteric", "cryptic"],
         help="Prediction task. 'all' runs all four models (default).",
     )
     parser.add_argument(
