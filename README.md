@@ -24,7 +24,7 @@ and cryptic-site paths. All input and output paths are supplied by the user;
 the package does not assume a dataset location.
 
 ```bash
-siteweaver \
+python predict.py \
   --pdb /path/to/protein.pdb \
   --out-dir /path/to/results \
   --task all \
@@ -48,7 +48,7 @@ node per candidate. Its input is the packed external cache, not a ligand and
 not a project-local path:
 
 ```bash
-siteweaver-cache \
+python rank_cached.py \
   --cache-dir /path/to/siteweaver_g1_pocket_node_cache \
   --complex-id 4ZSG \
   --out-dir /path/to/results_4ZSG \
@@ -71,10 +71,19 @@ used for the study.
 Run FPocket on one structure, or on a CSV containing `complex_id,pdb_path`:
 
 ```bash
-siteweaver-fpocket \
+python run_fpocket.py \
   --fpocket-bin /path/to/fpocket \
   --pdb /path/to/protein.pdb \
   --out-dir /path/to/fpocket_outputs
+```
+
+The same adapter can be run directly from the package directory without
+installing editable entry points:
+
+```bash
+python run_fpocket.py --help
+python compute_prs.py --help
+python rank_cached.py --help
 ```
 
 For a batch, replace `--pdb` with `--manifest manifest.csv`. The adapter
@@ -86,7 +95,7 @@ and log path in `fpocket_run.json`.
 Generate the three PRS channels after producing an active-probability table:
 
 ```bash
-siteweaver-prs \
+python compute_prs.py \
   --pdb /path/to/protein.pdb \
   --active-scores /path/to/active_context_scores.csv \
   --out-dir /path/to/prs_output
@@ -102,7 +111,7 @@ residue-to-active response, and their directional difference. To reproduce
 the allosteric path exactly, create the CSV with:
 
 ```bash
-siteweaver --pdb /path/to/protein.pdb \
+python predict.py --pdb /path/to/protein.pdb \
   --out-dir /path/to/active_context_output \
   --task active_context
 ```

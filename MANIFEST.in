@@ -1,5 +1,9 @@
 include README.md
 include requirements-runtime.txt
+include predict.py
+include run_fpocket.py
+include compute_prs.py
+include rank_cached.py
 include configs/*.yaml
 include release/*.json
 include weights/*.ckpt
