@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class VariantSpec:
-    """The fixed allosteric configuration bundled with this release."""
+    """Feature schema for the article-main predicted-active PRS cascade."""
 
     name: str
     description: str
@@ -18,9 +18,11 @@ class VariantSpec:
     n_layers: int = 8
     negative_mode: str = "both"
     same_weight: float = 1.0
-    cross_weight: float = 1.0
+    cross_weight: float = 0.5
     prs_feature_dim: int = 3
     prs_mode: str = "directional"
+    node_input_dim_override: int | None = None
+    edge_input_dim_override: int | None = None
 
     @property
     def node_input_dim(self) -> int:
@@ -32,7 +34,12 @@ class VariantSpec:
             dim -= 1
         if not self.use_active_node_probability:
             dim -= 1
-        return dim + self.prs_feature_dim
+        value = dim + self.prs_feature_dim
+        return int(self.node_input_dim_override) if self.node_input_dim_override is not None else value
+
+    @property
+    def edge_input_dim(self) -> int:
+        return int(self.edge_input_dim_override) if self.edge_input_dim_override is not None else 5
 
 
 I01_NOYP_PRS = VariantSpec(
@@ -43,5 +50,5 @@ I01_NOYP_PRS = VariantSpec(
 
 def get_variant(name: str = "I01_NOYP_PRS") -> VariantSpec:
     if str(name).upper() != I01_NOYP_PRS.name:
-        raise ValueError("This package bundles only the selected I01_NOYP_PRS allosteric model")
+        raise ValueError("This package exposes only the article-main I01_NOYP_PRS schema")
     return I01_NOYP_PRS

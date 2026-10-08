@@ -21,6 +21,20 @@ profiles:
     node_features: 14 heavy-atom graph features including pocket and annotated active context
     edge_features: 21
     checkpoint_epoch: 14
+    use_for_default_allosteric_task: false
+  allosteric_production:
+    checkpoint: weights/allosteric_i01_prs_final.ckpt
+    label: article main predicted-active cascade
+    variant: I01_NOYP_PRS
+    task: direct residue-level allosteric ranking
+    architecture: 8-layer residue GNN
+    node_features: 33 (29 base + predicted active-site probability + 3 PRS channels)
+    edge_features: 5
+    uses_ligand_free_pocket_probability: false
+    uses_ligand_free_embedding: false
+    active_context_checkpoint: weights/active_context_final.ckpt
+    prs: CA-only ProDy ANM, cutoff 15 A, gamma 1.0, 20 modes
+    checkpoint_epoch: 98
   allosteric_pocket_rank:
     checkpoint: weights/allosteric_pocket_rank_final.ckpt
     label: SW-Allo-P/G1
@@ -30,15 +44,9 @@ profiles:
     edge_features: 22
     checkpoint_epoch: 20
     cache_required: true
-  allosteric_prs_research:
-    checkpoint: weights/allosteric_prs_research_epoch98.ckpt
-    task: optional PRS-enabled residue ranker for collaborator parameter studies
-    architecture: 8-layer residue ranker with directional CA-only PRS channels
-    cache_required: false
-    checkpoint_epoch: 98
   active_context:
     checkpoint: weights/active_context_final.ckpt
-    task: upstream active-context model used by the optional PRS-enabled branch
+    task: upstream active-context model for continuous active-site context
     architecture: 8-layer residue GNN
     node_features: 29
     checkpoint_epoch: 96

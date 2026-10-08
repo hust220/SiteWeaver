@@ -18,15 +18,18 @@ from .io import write_bfactor_pdb
 from .pdb_utils import build_protein_only_graph_arrays, parse_pdb_residues
 from .pocket_model import LigandFreeYuelPocket
 from .prs_features import build_prs_features
+from .models.r0_model import HeavyAtomR0KnownActive
 from .ranker_model import SiteWeaverAblationModel
-from .variants import I01_NOYP_PRS
+from .variants import get_variant
+from .r0_features import build_r0_graph
 
 
 WEIGHT_FILES = {
     "pocket": "ligand_free_pocket_final.ckpt",
     "active_site": "active_site_final.ckpt",
     "active_context": "active_context_final.ckpt",
-    "allosteric": "allosteric_prs_research_epoch98.ckpt",
+    "allosteric": "allosteric_i01_prs_final.ckpt",
+    "allosteric_r0": "allosteric_residue_rank_final.ckpt",
     "cryptic": "cryptic_site_final.ckpt",
 }
 
@@ -167,10 +170,16 @@ class SiteWeaverPredictor:
             )
         elif name == "allosteric":
             model = SiteWeaverAblationModel(
-                I01_NOYP_PRS,
+                spec=get_variant("I01_NOYP_PRS"),
                 hidden_nf=hidden_nf,
                 embedding_dim=int(hparams.get("embedding_dim", 64)),
                 dropout=0.0,
+            )
+        elif name == "allosteric_r0":
+            model = HeavyAtomR0KnownActive(
+                hidden_nf=hidden_nf,
+                embedding_dim=int(hparams.get("embedding_dim", 64)),
+                n_layers=int(hparams.get("n_layers", 16)),
             )
         else:
             raise ValueError(f"Unknown model profile: {name}")
@@ -238,37 +247,91 @@ class SiteWeaverPredictor:
         return torch.sigmoid(logits)
 
     @torch.inference_mode()
-    def _allosteric_score(
+    def _allosteric_score_r0(
         self,
         pdb_path: Path,
         graph: Graph,
         residue_meta: list[dict],
-        base_features: torch.Tensor,
-        n_residues: int,
+        pocket_probability: torch.Tensor,
         active_probability: torch.Tensor,
     ) -> tuple[torch.Tensor, dict]:
-        prs, prs_stats = build_prs_features(
+        arrays = build_r0_graph(
             pdb_path,
             residue_meta,
+            pocket_probability.detach().cpu().numpy(),
             active_probability.detach().cpu().numpy(),
-            chain_ids=self.chains or None,
         )
-        prs_tensor = torch.as_tensor(prs, dtype=torch.float32, device=self.device)
-        residue_features = torch.cat([active_probability[:, None], prs_tensor], dim=-1)
-        node_features = torch.cat(
-            [base_features, residue_features[graph.ndata["residue_index"]]], dim=-1
+        edge_index = torch.as_tensor(arrays["edge_index"], dtype=torch.long, device=self.device)
+        graph = Graph(edge_index, int(arrays["node_features"].shape[0]))
+        graph.ndata["h"] = torch.as_tensor(
+            arrays["node_features"], dtype=torch.float32, device=self.device
         )
-        graph.ndata["h"] = node_features
+        graph.ndata["global_residue_index"] = torch.as_tensor(
+            arrays["residue_indices"], dtype=torch.long, device=self.device
+        )
+        graph.edata["e"] = torch.as_tensor(
+            arrays["edge_features"], dtype=torch.float32, device=self.device
+        )
         batch = {
             "graph": graph,
             "active_site_probability": active_probability,
-            "residue_sample_ids": torch.zeros(n_residues, dtype=torch.long, device=self.device),
-            "num_residues_per_sample": torch.tensor([n_residues], device=self.device),
+            "residue_sample_ids": torch.zeros(len(residue_meta), dtype=torch.long, device=self.device),
+            "num_residues_per_sample": torch.tensor([len(residue_meta)], device=self.device),
+        }
+        scores, scale = self._get_model("allosteric_r0")(batch)
+        return scores, {
+            "score_scale": float(scale.detach().cpu().item()),
+            "active_context_source": "bundled active-context model",
+            "uses_prs": False,
+            "profile": "R0",
+        }
+
+    @torch.inference_mode()
+    def _allosteric_score_i01(
+        self,
+        pdb_path: Path,
+        graph: Graph,
+        residue_meta: list[dict],
+        active_probability: torch.Tensor,
+    ) -> tuple[torch.Tensor, dict]:
+        """Run the article's predicted-active I01_NOYP_PRS cascade.
+
+        The production ranker consumes the 29 base residue-graph channels,
+        one continuous predicted active-site channel, and three CA-only PRS
+        channels. It intentionally does not consume the ligand-free pocket
+        probability or the ligand-free hidden embedding.
+        """
+        prs_features, prs_stats = build_prs_features(
+            pdb_path,
+            residue_meta,
+            active_probability.detach().cpu().numpy(),
+            cutoff=15.0,
+            gamma=1.0,
+            n_modes=20,
+            dense_max_residues=1200,
+            chain_ids=self.chains or None,
+        )
+        residue_index = graph.ndata["residue_index"].long()
+        base_features = graph.ndata["h"]
+        active_node = active_probability[residue_index, None]
+        prs_node = torch.as_tensor(prs_features, dtype=base_features.dtype, device=self.device)[residue_index]
+        graph_i01 = graph.clone()
+        graph_i01.ndata["h"] = torch.cat([base_features, active_node, prs_node], dim=-1)
+        graph_i01.ndata["global_residue_index"] = residue_index
+        batch = {
+            "graph": graph_i01,
+            "active_site_probability": active_probability,
+            "residue_sample_ids": torch.zeros(len(residue_meta), dtype=torch.long, device=self.device),
+            "num_residues_per_sample": torch.tensor([len(residue_meta)], device=self.device),
         }
         scores, scale = self._get_model("allosteric")(batch)
-        graph.ndata["h"] = base_features
-        prs_stats["score_scale"] = float(scale.detach().cpu().item())
-        return scores, prs_stats
+        return scores, {
+            "score_scale": float(scale.detach().cpu().item()),
+            "active_context_source": "bundled base-only active-context model",
+            "uses_prs": True,
+            "profile": "I01_NOYP_PRS",
+            "prs": prs_stats,
+        }
 
     def _write_task(
         self,
@@ -334,7 +397,7 @@ class SiteWeaverPredictor:
         task = str(task).lower()
         aliases = {"active": "active_site", "allosteric_site": "allosteric", "cryptic_site": "cryptic"}
         task = aliases.get(task, task)
-        valid = {"all", "pocket", "active_site", "active_context", "allosteric", "cryptic"}
+        valid = {"all", "pocket", "active_site", "active_context", "allosteric", "allosteric_r0", "cryptic"}
         if task not in valid:
             raise ValueError(f"task must be one of {sorted(valid)}")
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -343,7 +406,7 @@ class SiteWeaverPredictor:
         n_residues = len(residue_meta)
         results = {}
         pocket_probability = None
-        if task in {"all", "pocket", "active_site", "cryptic"}:
+        if task in {"all", "pocket", "active_site", "cryptic", "allosteric_r0"}:
             pocket_probability = self._pocket_probability(graph, n_residues)
         if task in {"all", "pocket"}:
             results["pocket"] = self._write_task(
@@ -375,14 +438,27 @@ class SiteWeaverPredictor:
                 active_context_probability = self._site_probability(
                     "active_context", graph, base_features, n_residues
                 )
-            allosteric_score, prs_stats = self._allosteric_score(
-                pdb_path, graph, residue_meta, base_features, n_residues, active_context_probability
+            allosteric_score, allosteric_stats = self._allosteric_score_i01(
+                pdb_path, graph, residue_meta, active_context_probability
             )
             results["allosteric"] = self._write_task(
                 "allosteric", pdb_path, out_dir, residue_meta, allosteric_score,
                 "ranking_score", _rank_percentile(allosteric_score.detach().cpu().numpy()),
             )
-            results["allosteric"]["prs"] = prs_stats
+            results["allosteric"].update(allosteric_stats)
+        if task == "allosteric_r0":
+            if active_context_probability is None:
+                active_context_probability = self._site_probability(
+                    "active_context", graph, base_features, n_residues
+                )
+            allosteric_score, allosteric_stats = self._allosteric_score_r0(
+                pdb_path, graph, residue_meta, pocket_probability, active_context_probability
+            )
+            results["allosteric_r0"] = self._write_task(
+                "allosteric_r0", pdb_path, out_dir, residue_meta, allosteric_score,
+                "ranking_score", _rank_percentile(allosteric_score.detach().cpu().numpy()),
+            )
+            results["allosteric_r0"].update(allosteric_stats)
         if task in {"all", "cryptic"}:
             cryptic_probability = self._site_probability(
                 "cryptic", graph, base_features, n_residues, pocket_probability[:, None]

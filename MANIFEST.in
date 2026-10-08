@@ -1,4 +1,5 @@
 include README.md
+include COLLABORATOR_HANDOFF.md
 include requirements-runtime.txt
 include predict.py
 include run_fpocket.py
@@ -9,5 +10,9 @@ include release/*.json
 include release/*.md
 include weights/*.ckpt
 include weights/manifest.json
+include requirements-training.txt
+recursive-include training *.py
+recursive-include data *.csv.gz
+recursive-include data *.json
 recursive-include src/siteweaver *.py
 recursive-include examples *.pdb

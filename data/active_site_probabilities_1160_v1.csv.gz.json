@@ -1,0 +1,98 @@
+{
+  "active_probability_semantics": "copied_exactly_from_cache; see source_cache_manifest",
+  "columns": [
+    "complex_id",
+    "pdb_id",
+    "split",
+    "residue_index",
+    "chain_id",
+    "residue_number",
+    "insertion_code",
+    "residue_name",
+    "active_site_probability"
+  ],
+  "file": "active_site_probabilities_1160_v1.csv.gz",
+  "format": "gzip-compressed CSV",
+  "num_residue_rows": 959215,
+  "num_samples": 1160,
+  "source_cache": "projects/allosteric_design/cache/yuelpocket2_combo_i01_noyp_prs_p8e23_v1",
+  "source_cache_manifest": {
+    "cache_format": "torch_packed_zstd",
+    "preprocessing": {
+      "prs_cutoff": 15.0,
+      "prs_dense_max_residues": 1200,
+      "prs_gamma": 1.0,
+      "prs_mean_over_samples": 1.139315053236125,
+      "prs_modes": 20,
+      "prs_stats_count": 1160
+    },
+    "source": {
+      "active_probability_dir": "tmp/analysis/yuelpocket2_ablation_C2_active_predictions_p8_epoch23_v2",
+      "cache_dir": "projects/allosteric_design/cache/allobench_pair_rank_csv_v1",
+      "label_free_prs": true,
+      "source_manifest": {
+        "allobench_csv": "projects/allosteric_design/data/ASD_High_Resolution_noGaps_noEmpty.csv",
+        "allobench_tar": "projects/allosteric_design/data/AlloBench_complex_set.tar.gz",
+        "cache_format": "torch_packed_zstd",
+        "candidate_samples": 1246,
+        "csv_stats": {
+          "rows_with_active": 1320,
+          "rows_with_allosteric": 1320,
+          "rows_with_pdb": 1320,
+          "unique_pdbs": 1246
+        },
+        "csv_tar_intersection": 1246,
+        "limit": 0,
+        "protein_contact_cutoff": 8.0,
+        "site_label_semantics": "ASD CSV residue labels mapped to clean PDB residues by chain, residue number, insertion code, and optional residue name.",
+        "site_overlap_policy": "remove_intersection",
+        "tar_complexes": 1273,
+        "tar_complexes_by_split": {
+          "test": 127,
+          "train": 1146
+        }
+      }
+    },
+    "splits": {
+      "test": {
+        "format": "torch_packed_zstd",
+        "path": "test.packed.ptzst",
+        "samples": 116,
+        "size_bytes": 13577252
+      },
+      "train": {
+        "format": "torch_packed_zstd",
+        "path": "train.packed.ptzst",
+        "samples": 941,
+        "size_bytes": 118719072
+      },
+      "val": {
+        "format": "torch_packed_zstd",
+        "path": "val.packed.ptzst",
+        "samples": 103,
+        "size_bytes": 15096792
+      }
+    },
+    "variant": {
+      "cross_weight": 0.5,
+      "description": "YuelPocket removed from both paths; retain PRS.",
+      "edge_mode": "all",
+      "n_layers": 8,
+      "name": "I01_NOYP_PRS",
+      "negative_mode": "both",
+      "node_input_dim": 33,
+      "pretraining_mode": "off",
+      "prs_feature_dim": 3,
+      "prs_mode": "directional",
+      "same_weight": 1.0,
+      "use_active_context": true,
+      "use_active_node_probability": true,
+      "use_pocket_probability": false,
+      "use_prs": true
+    },
+    "version": 1
+  },
+  "source_cache_manifest_sha256": "f0b4f86562727a5cc1f96f46a91c2c46f2945a6e33dc02dc6f84a0a5f224e9ec",
+  "split_file": null,
+  "split_file_sha256": null
+}

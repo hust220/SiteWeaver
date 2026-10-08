@@ -4,26 +4,29 @@
   "repository_payload": {
     "source": "software/SiteWeaver/src",
     "selected_weights": "software/SiteWeaver/weights",
+    "article_main_allosteric_profile": "I01_NOYP_PRS",
     "manuscript_included": false,
     "training_cache_included": false,
     "wandb_included": false
   },
+  "bundled_collaborator_assets": [
+    {
+      "name": "active_site_probabilities_1160",
+      "logical_path": "data/active_site_probabilities_1160_v1.csv.gz",
+      "samples": 1160,
+      "residue_rows": 959215,
+      "size_bytes": 11381584,
+      "sha256": "cdd5cd67c031c52e3f91843000c8859f1afe82a5cc110b573e549f2a4f4c5654",
+      "semantics": "residue-aligned continuous active-site probabilities used by the shared cache preparation"
+    }
+  ],
   "external_assets": [
     {
       "name": "g1_pocket_node_cache",
       "logical_path": "cache/siteweaver_g1_pocket_node_v1",
       "samples": 1160,
       "size_bytes": 5005869174,
-      "sha256": "136472c4ff84cd00b5ef35f1a205169b10a3abd6669450e306360ff202453504",
-      "status": "to_upload",
-      "url": null
-    },
-    {
-      "name": "r0_prs_cache",
-      "logical_path": "cache/siteweaver_r0_prs_with_pocket_v1",
-      "samples": 1160,
-      "size_bytes": 4899143716,
-      "sha256": "54718d245baf67640d7ba958c9eaa319587ac52354369150208ddcfe4a6ed1e4",
+      "sha256": "0c36294614e21e2646f3ec42b2bcec314527d96470c7f605e9f6a3a84da41498",
       "status": "to_upload",
       "url": null
     },

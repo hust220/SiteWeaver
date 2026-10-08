@@ -38,7 +38,7 @@ class SiteWeaverAblationModel(nn.Module):
             c_h=int(hidden_nf),
             n_layers=int(spec.n_layers),
             in_node_dim=int(spec.node_input_dim),
-            in_edge_dim=const.EDGE_FEATURE_DIM,
+            in_edge_dim=int(spec.edge_input_dim),
             out_node_dim=int(hidden_nf),
             out_edge_dim=1,
         )
