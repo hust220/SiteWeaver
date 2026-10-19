@@ -15,3 +15,6 @@ outputs/
 *.npz
 release/*.tar.gz
 release/*.sha256
+archive/legacy_i01/data/
+archive/legacy_i01/weights/
+archive/legacy_i01/src/

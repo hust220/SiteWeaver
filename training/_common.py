@@ -9,7 +9,6 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from siteweaver.cache.r0_cache_io import load_split_registry
 from siteweaver.graph import Graph, batch as graph_batch
 
 
@@ -29,13 +28,26 @@ def sample_key(sample: dict) -> str:
 
 
 def split_samples(samples: list[dict], split_file: str | Path, split: str) -> list[dict]:
-    registry = load_split_registry(split_file)
+    with Path(split_file).open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames != ["complex_id", "split"]:
+            raise ValueError("Split registry needs exactly complex_id,split columns")
+        registry: dict[str, set[str]] = {}
+        for row in reader:
+            key = row["complex_id"].strip().upper()
+            label = row["split"].strip().lower()
+            if not key or label not in {"train", "val", "test"}:
+                raise ValueError(f"Invalid split registry row: {row}")
+            labels = registry.setdefault(key, set())
+            if label in labels:
+                raise ValueError(f"Duplicate {key},{label} row")
+            labels.add(label)
     sample_keys = {sample_key(sample) for sample in samples}
     if sample_keys != set(registry):
         missing = sorted(sample_keys - set(registry))[:5]
         extra = sorted(set(registry) - sample_keys)[:5]
         raise ValueError(f"Cache and split registry differ; missing={missing}, extra={extra}")
-    selected = [sample for sample in samples if registry[sample_key(sample)] == str(split).lower()]
+    selected = [sample for sample in samples if str(split).lower() in registry[sample_key(sample)]]
     if not selected:
         raise ValueError(f"Split {split!r} is empty")
     return selected

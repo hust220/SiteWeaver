@@ -1,41 +1,64 @@
 {
   "package": "SiteWeaver",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository_payload": {
     "source": "software/SiteWeaver/src",
     "selected_weights": "software/SiteWeaver/weights",
-    "article_main_allosteric_profile": "I01_NOYP_PRS",
+    "article_main_allosteric_profiles": ["SW-Allo-R", "SW-Allo-P"],
     "manuscript_included": false,
     "training_cache_included": false,
     "wandb_included": false
   },
-  "bundled_collaborator_assets": [
+  "archived_assets": [
     {
       "name": "active_site_probabilities_1160",
-      "logical_path": "data/active_site_probabilities_1160_v1.csv.gz",
+      "logical_path": "archive/legacy_i01/data/active_site_probabilities_1160_v1.csv.gz",
       "samples": 1160,
       "residue_rows": 959215,
       "size_bytes": 11381584,
       "sha256": "cdd5cd67c031c52e3f91843000c8859f1afe82a5cc110b573e549f2a4f4c5654",
-      "semantics": "residue-aligned continuous active-site probabilities used by the shared cache preparation"
+      "semantics": "historical I01 predicted-active input; not used by current R0/G1 inference"
+    },
+    {
+      "name": "legacy_i01_release_snapshot",
+      "logical_path": "archive/legacy_i01_20261016.tar.gz",
+      "sha256": "865308fc0d91f3d5e8c7dd3424a6456b5c63be6e04f160caea6ff066b13d6076",
+      "status": "local_archive_not_in_git",
+      "git_commit": "0d2148b8f4446889f040b8aebf42304eb40b6afb"
     }
   ],
   "external_assets": [
     {
       "name": "g1_pocket_node_cache",
-      "logical_path": "cache/siteweaver_g1_pocket_node_v1",
+      "logical_path": "projects/allosteric_design/cache/yuelpocket2_fpocket_pocket_node_rank_v1/data.packed.ptzst",
       "samples": 1160,
-      "size_bytes": 5005869174,
-      "sha256": "0c36294614e21e2646f3ec42b2bcec314527d96470c7f605e9f6a3a84da41498",
+      "size_bytes": 5005795415,
+      "sha256": "136472c4ff84cd00b5ef35f1a205169b10a3abd6669450e306360ff202453504",
       "status": "to_upload",
       "url": null
     },
     {
       "name": "r0_heavy_atom_cache",
-      "logical_path": "cache/siteweaver_r0_heavy_atom_v1",
+      "logical_path": "projects/allosteric_design/cache/yuelpocket2_heavy_atom_R0_keep_overlap_1160_v1/data.packed.ptzst",
       "samples": 1160,
-      "size_bytes": 4889546140,
-      "sha256": "4c3d971b98332ee381cc5dcab4ed82b015ce543b63158c90b285d8ff8a437c14",
+      "size_bytes": 4889568835,
+      "sha256": "68d7f517643a231f382832f4014a76eedcb856a56acdc208eee908fa08834a95",
+      "status": "to_upload",
+      "url": null
+    },
+    {
+      "name": "active_site_AS_PROB_cache",
+      "logical_path": "projects/allosteric_design/cache/yuelpocket2_ptic_active_probability_only_p8e23_v1",
+      "samples": 1160,
+      "size_bytes": 134175830,
+      "status": "to_upload",
+      "url": null
+    },
+    {
+      "name": "cryptic_site_CR_PROB_cache",
+      "logical_path": "projects/allosteric_design/cache/yuelpocket2_ptic_cryptic_probability_only_p8e23_v1",
+      "samples": 1107,
+      "size_bytes": 52631794,
       "status": "to_upload",
       "url": null
     },
@@ -47,7 +70,6 @@
     }
   ],
   "split_registries": [
-    "allobench_paper_set_shared_val_test_v1.csv",
-    "allobench_paper_set_both_val_test_full_v1.csv"
+    "allobench_paper_set_shared_val_test_v1.csv"
   ]
 }

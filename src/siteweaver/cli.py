@@ -16,7 +16,7 @@ from siteweaver.inference import SiteWeaverPredictor  # noqa: E402
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run the bundled SiteWeaver residue-level predictors on a protein PDB."
+        description="Run SiteWeaver pocket, active, cryptic, and known-active allosteric predictors."
     )
     parser.add_argument("--pdb", required=True, help="Input protein PDB or PDB.GZ file.")
     parser.add_argument(
@@ -25,8 +25,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--task",
         default="all",
-        choices=["all", "pocket", "active_site", "active_context", "allosteric", "allosteric_r0", "cryptic"],
-        help="Prediction task. 'all' runs all four models (default).",
+        choices=["all", "pocket", "active_site", "allosteric", "allosteric_residue", "allosteric_pocket", "cryptic"],
+        help="Prediction task. 'all' runs pocket/active/cryptic, plus allosteric branches when their inputs are supplied.",
+    )
+    parser.add_argument(
+        "--active-sites",
+        default=None,
+        help="CSV of annotated active residues with chain_id,residue_number,insertion_code; required for allosteric tasks.",
+    )
+    parser.add_argument(
+        "--fpocket-bin",
+        default=None,
+        help="FPocket executable, required for the allosteric pocket-ranking branch.",
     )
     parser.add_argument(
         "--chain",
@@ -54,7 +64,10 @@ def main(argv: list[str] | None = None) -> int:
         device=args.device,
         chains=args.chain,
     )
-    metadata = predictor.predict(args.pdb, args.out_dir, task=args.task)
+    metadata = predictor.predict(
+        args.pdb, args.out_dir, task=args.task,
+        active_sites=args.active_sites, fpocket_bin=args.fpocket_bin,
+    )
     print(json.dumps(metadata, indent=2, sort_keys=True))
     return 0
 

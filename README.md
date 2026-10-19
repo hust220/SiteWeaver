@@ -1,221 +1,161 @@
 # SiteWeaver
 
-SiteWeaver is a self-contained inference package for four protein-site tasks:
-binding-pocket, active/functional-site, allosteric-site, and cryptic-site
-prediction. It includes the model source, frozen checkpoints, configuration
-metadata, and one small example structure. It does not import anything from
-the research project tree.
+SiteWeaver provides frozen models for binding-pocket, active-site, cryptic-site,
+and allosteric-site prediction. Its two allosteric branches are SW-Allo-R
+(residue ranking, R0 checkpoint) and SW-Allo-P (FPocket candidate ranking, G1
+checkpoint). They were trained with **annotated active-site residues**. They do
+not accept predicted active-site probabilities as an equivalent input. The
+package contains its runtime source and selected checkpoints and does not
+import the research project.
 
 ## Install
 
-Use an environment with a CPU or CUDA build of PyTorch, then run:
+Use Python 3.10+ and a CPU or CUDA build of PyTorch:
 
 ```bash
 python -m pip install -e .
 ```
 
-The same dependencies are listed in `requirements-runtime.txt`. No
-`torch_geometric` installation is required.
-
-## PDB inference
-
-The PDB command runs the residue-level pocket, active-site, article-main
-allosteric, and cryptic-site paths. All input and output paths are supplied by
-the user; the package does not assume a dataset location. The default
-allosteric path is the article's `I01_NOYP_PRS` predicted-active cascade.
-Cache-based training and exact evaluation are provided by the scripts in
-`training/`.
+FPocket is a separate executable required for SW-Allo-P. The frozen G1 cache
+was generated with FPocket 4.2.3. Another FPocket version can produce a
+different candidate list and therefore different scores. ProDy is optional
+and is needed only for the separate historical PRS adapter:
 
 ```bash
-python predict.py \
-  --pdb /path/to/protein.pdb \
-  --out-dir /path/to/results \
-  --task all \
-  --device auto
+python -m pip install -e '.[prs]'
 ```
 
-Use `--task pocket`, `--task active_site`, `--task allosteric`, or
-`--task cryptic` for one task. `--task allosteric` runs the article's
-`I01_NOYP_PRS` cascade. Use `--task allosteric_r0` for the Figure 2
-residue-first R0 reference. Use `--chain A B` to restrict the graph to
-selected chains. Allosteric scores are ranking scores, not calibrated
-probabilities.
+## Input
 
-Each task writes a CSV and a PDB with residue-level scores in the B-factor
-column. Pocket, active-site, and cryptic B-factors are probabilities multiplied
-by 100. Allosteric B-factors are within-protein rank percentiles from 0 to 100.
-The metadata JSON records the checkpoint and score semantics.
+Supply a protein PDB or PDB.GZ path. Ligands are not model inputs. The
+allosteric commands additionally require a CSV listing annotated active-site
+residues, one per row:
 
-## Production allosteric pocket ranking
-
-The production allosteric workflow ranks FPocket candidates with one pocket
-node per candidate. Its input is the packed external cache, not a ligand and
-not a project-local path:
-
-```bash
-python rank_cached.py \
-  --cache-dir /path/to/siteweaver_g1_pocket_node_cache \
-  --complex-id 4ZSG \
-  --out-dir /path/to/results_4ZSG \
-  --mode pocket \
-  --device cuda
+```csv
+chain_id,residue_number,insertion_code
+A,61,
+A,62,
 ```
 
-The command writes a pocket score CSV and a JSON record containing the highest
-scoring pocket and its nearby residue indices. The corresponding cache format
-is a single `data.packed.ptzst` plus `manifest.json`; the complete cache is
-distributed separately because it is about 4.7 GB. The R0 residue ranker can
-be run on the matching full-atom cache with `--mode residue`.
+Every row must map to the supplied structure. Missing or duplicate residues
+cause an error. `examples/4ZSG_active_sites.csv` illustrates the format. The
+active-site predictor is a separate task and is **not** silently used as the
+known-active input of SW-Allo-R or SW-Allo-P.
 
-## Optional FPocket and PRS adapters
+## PDB prediction
 
-FPocket and ProDy are intentionally not bundled as third-party executables.
-The package does provide the exact invocation and feature-generation adapters
-used for the study.
-
-Run FPocket on one structure, or on a CSV containing `complex_id,pdb_path`:
-
-```bash
-python run_fpocket.py \
-  --fpocket-bin /path/to/fpocket \
-  --pdb /path/to/protein.pdb \
-  --out-dir /path/to/fpocket_outputs
-```
-
-The same adapter can be run directly from the package directory without
-installing editable entry points:
-
-```bash
-python run_fpocket.py --help
-python compute_prs.py --help
-python rank_cached.py --help
-```
-
-For a batch, replace `--pdb` with `--manifest manifest.csv`. The adapter
-copies each PDB into `<out-dir>/<complex_id>/`, runs `fpocket -f <local>.pdb`,
-expects `<complex_id>_out/pockets/`, uses eight workers by default, reuses
-completed outputs, and records the command, input hash, FPocket probe output,
-and log path in `fpocket_run.json`.
-
-Generate the three PRS channels after producing an active-probability table:
-
-```bash
-python compute_prs.py \
-  --pdb /path/to/protein.pdb \
-  --active-scores /path/to/active_context_scores.csv \
-  --out-dir /path/to/prs_output
-```
-
-The active-score CSV must contain `chain_id,residue_number,insertion_code`
-and `probability`. The default parameters reproduce the project workflow:
-protein `CA` atoms only, ANM cutoff 15 A, gamma 1.0, 20 modes, dense ProDy
-calculation up to 1,200 residues, and the sparse low-rank fallback above that
-size. Outputs are `prs_features.csv`, `prs_features.npy`, and
-`prs_metadata.json`; the three columns are active-to-residue response,
-residue-to-active response, and their directional difference. The default
-`predict.py --task allosteric` performs this same CA-only PRS calculation
-internally. To inspect the upstream active-context output alone, create the
-CSV with:
+Pocket, active-site, and cryptic-site predictions need only the PDB:
 
 ```bash
 python predict.py --pdb /path/to/protein.pdb \
-  --out-dir /path/to/active_context_output \
-  --task active_context
+  --out-dir /path/to/output --task all --device auto
 ```
 
-Changing `--cutoff`, `--gamma`, `--n-modes`, or `--chain` is supported and is
-recorded in the metadata. The adapters never assume a dataset path and never
-silently substitute a missing external executable.
-
-## Collaborator training: SW-Allo-R and SW-Allo-P
-
-The package provides the two R0/G1 reference training entry points. They do not assume
-any local project path; provide the cache, split registry, and output
-directory. `SW-Allo-R` uses the 16-layer full-atom R0 cache. `SW-Allo-P` uses
-the 16-layer FPocket pocket-node G1 cache.
-
-Train the residue ranker:
+With no active-site CSV, `--task all` reports both allosteric branches as
+skipped in its metadata. To run SW-Allo-R:
 
 ```bash
-python training/train_sw_allo_r.py \
-  --cache-dir /path/to/r0_heavy_atom_cache \
-  --split-file /path/to/complex_id_split.csv \
-  --out-dir /path/to/sw_allo_r_run \
-  --device cuda \
-  --wandb-project allosteric_design
+python predict.py --pdb /path/to/protein.pdb \
+  --active-sites /path/to/active_sites.csv \
+  --out-dir /path/to/output --task allosteric_residue --device auto
 ```
 
-Train the pocket ranker:
+To run SW-Allo-P, supply FPocket. The package writes a protein-only input,
+runs FPocket, constructs the same 25-node-feature/22-edge-feature pocket-node
+graph schema as training, and scores all candidates:
 
 ```bash
-python training/train_sw_allo_p.py \
-  --cache-dir /path/to/g1_pocket_node_cache \
-  --split-file /path/to/complex_id_split.csv \
-  --out-dir /path/to/sw_allo_p_run \
-  --device cuda \
-  --wandb-project allosteric_design
+python predict.py --pdb /path/to/protein.pdb \
+  --active-sites /path/to/active_sites.csv \
+  --fpocket-bin /path/to/fpocket \
+  --out-dir /path/to/output --task allosteric_pocket --device auto
 ```
 
-The R0 script uses 14 node features, 21 edge features, 16 GNN layers, and the
-same-protein/cross-protein ranking loss with 32/16 sampled negatives. The G1
-script uses 25 node features, 22 edge features, 16 GNN layers, and the
-listwise hard-negative pocket loss. Both use `batch_size=2`, `shuffle=False`,
-save `last.ckpt`, `newest_completed.ckpt`, `best.ckpt`, and
-`run_summary.json`, and accept `--resume` and `--wandb-run-id`.
+`--task allosteric` runs both branches and requires both extra inputs. With
+both inputs supplied, `--task all` runs pocket, active-site, cryptic-site,
+SW-Allo-R, and SW-Allo-P. `--chain A B` restricts the model to selected
+chains; active-site CSV identifiers must then refer to those chains.
 
-The file `data/active_site_probabilities_1160_v1.csv.gz` contains the exact
-residue-aligned continuous active-site values used during shared cache
-preparation. They are copied from the cache, not regenerated locally; the
-companion JSON records provenance and checksums. To use another table with
-the R0 script, run:
+SW-Allo-R writes raw per-residue scores to CSV and within-protein rank
+percentiles (0-100) to PDB B-factors. SW-Allo-P writes one score per FPocket
+candidate, a JSON record for the highest-scoring candidate, and a PDB whose
+B-factor is 100 for residues mapped to that candidate within 4 A of an alpha
+sphere and 0 elsewhere. The 6 A neighbor list used to build the G1 graph is
+also saved separately; it is not the Figure 3 evaluation mask.
+Allosteric outputs are **ranking scores, not calibrated probabilities**.
+Pocket, active-site, and cryptic-site B-factors remain probabilities multiplied
+by 100. Each prediction includes a metadata JSON with checkpoint filenames,
+input paths, skipped tasks, and score semantics.
+
+## Cached evaluation and optional tools
+
+Existing R0/G1 packed caches can be evaluated without rerunning FPocket:
 
 ```bash
-python training/export_active_site_probabilities.py \
-  --cache-dir /path/to/cache \
-  --split-file /path/to/complex_id_split.csv \
-  --output /path/to/active_site_probabilities.csv.gz
+python rank_cached.py --cache-dir /path/to/g1_cache \
+  --complex-id 4ZSG --out-dir /path/to/output --mode pocket --device cpu
+python rank_cached.py --cache-dir /path/to/r0_cache \
+  --complex-id 4ZSG --out-dir /path/to/output --mode residue --device cpu
 ```
 
-The R0 cache already contains graph features and the active-site probability
-channel. The G1 cache contains the precomputed pocket-node features, including
-active-site-derived pocket descriptors. The bundled article-main I01 checkpoint
-is for inference; collaborator retraining with new PRS features still requires
-a new cache and an explicit input schema. The split registry is an independent two-column CSV
-(`complex_id,split`), so one cache can support multiple assignments.
+FPocket can also be run separately with the study's local-copy invocation
+policy:
 
-## Bundled profiles
+```bash
+python run_fpocket.py --fpocket-bin /path/to/fpocket \
+  --pdb /path/to/protein.pdb --out-dir /path/to/fpocket_output
+```
 
-The exact model settings and checkpoint provenance are in
-`configs/final_profiles.yaml` and `weights/manifest.json`.
+The optional `compute_prs.py` adapter reproduces the ProDy ANM/PRS feature
+generation used in historical I01 controls. PRS is **not** an input of either
+current allosteric branch. The retired I01 implementation, weights, and
+release documentation are preserved by pre-switch commit
+`0d2148b8f4446889f040b8aebf42304eb40b6afb`. The local archive described in
+`archive/legacy_i01/README.md` is not part of the current GitHub payload.
 
-- `ligand_free_pocket_final.ckpt`: 8-layer ligand-free pocket predictor.
-- `active_site_final.ckpt`: active-site predictor with pocket probability.
-- `cryptic_site_final.ckpt`: cryptic-site predictor with pocket probability.
-- `allosteric_i01_prs_final.ckpt`: article-main `I01_NOYP_PRS` cascade using
-  predicted active-site context and three PRS channels.
-- `allosteric_residue_rank_final.ckpt`: `SW-Allo-R`, the 16-layer full-atom
-  R0 residue ranker used for the direct-residue comparison in Figure 2.
-- `allosteric_pocket_rank_final.ckpt`: `SW-Allo-P/G1`, the 16-layer FPocket
-  pocket-node ranker used for the pocket-first workflow in Figure 2.
-- `active_context_final.ckpt`: base-only upstream active-context profile used
-  by the article-main allosteric cascade.
+## Training reproducibility
 
-Every checkpoint is frozen at the selected epoch and has a recorded SHA-256.
-Historical checkpoints, W&B runs, training logs, raw datasets, and caches are
-intentionally excluded from this repository. Their logical names, sizes, and
-hashes are recorded in `release/artifact_manifest.json` for a separate Zenodo
-or institutional data upload.
+The existing R0/G1 training entry points accept externally supplied packed
+caches and a two-column `complex_id,split` registry. Running them is not
+required for inference and does not modify the bundled checkpoints:
 
-## Replacing a checkpoint
+```bash
+python training/train_sw_allo_r.py --cache-dir /path/to/r0_cache \
+  --split-file /path/to/split.csv --out-dir /path/to/run_r0 --device cuda
+python training/train_sw_allo_p.py --cache-dir /path/to/g1_cache \
+  --split-file /path/to/split.csv --out-dir /path/to/run_g1 --device cuda
+```
 
-Pass `--weights-dir /path/to/weights` only when replacing a bundled runtime
-profile with a checkpoint using the same architecture and filename. Validate
-the file with the SHA-256 manifest before sharing a result. The package does
-not auto-discover checkpoints outside its own `weights/` directory.
+The shared paper-set registry may list a complex twice, once for `val` and
+once for `test`. The packed caches and registry are supplied separately.
 
-## Provenance
+The released active-site and cryptic-site weights correspond to the
+`AS_PROB` and `CR_PROB` probability-only controls. To reproduce their training
+from separately supplied split caches:
 
-The graph backbone follows the YuelPocket implementation, with SiteWeaver
-task heads and the allosteric pocket-node ranker defined in this package.
-Preserve the upstream attribution and applicable license terms when
-redistributing the package.
+```bash
+python -m pip install -e '.[training]'
+python training/train_site_labels.py --task active \
+  --cache-dir /path/to/as_prob_cache --out-dir /path/to/run_active --device cuda
+python training/train_site_labels.py --task cryptic \
+  --cache-dir /path/to/cr_prob_cache --out-dir /path/to/run_cryptic --device cuda
+```
+
+The active cache has embedded `train`, `val`, and `test` splits (941/103/116
+structures). The cryptic cache has `train-0` to `train-3` and `test` splits;
+training uses `train-0..2`, validation uses `train-3`, and test is untouched.
+Both trainers default to 100 epochs, batch size 2, the original 8-layer
+architecture, weighted BCE plus 0.2 Dice loss, and validation AUPRC checkpoint
+selection. `--dry-run` checks a cached example without training.
+
+The R0 model has 16 GNN layers, 14 atom-node features, and 21 edge features.
+The G1 model has 16 GNN layers, 25 node features, and 22 edge features. Both
+use protein heavy atoms; G1 adds one node per FPocket candidate. The frozen
+G1 pocket-feature normalization statistics are in
+`configs/g1_feature_stats.json`. Large training caches are distributed
+separately, not through Git. See `configs/final_profiles.yaml`,
+`weights/manifest.json`, and `release/artifact_manifest.json` for model,
+checkpoint, and data provenance.
+
+The software release is for research use. Preserve the upstream YuelPocket
+and FPocket attributions and their applicable licenses when redistributing it.

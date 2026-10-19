@@ -1,0 +1,14 @@
+{
+  "source_schema": "yuelpocket2_fpocket_pocket_node_rank_v1",
+  "source_samples": 1160,
+  "pocket_neighbor_distance_angstrom": 6.0,
+  "pocket_feature_statistics": {
+    "log1p_alpha_sphere_count": {"mean": 3.380639923033567, "std": 0.5857233218576557},
+    "log1p_nearby_residue_count": {"mean": 2.757162205525284, "std": 0.43347528381781214},
+    "log1p_volume": {"mean": 5.753924712727958, "std": 0.5993021390414692},
+    "mean_active_distance": {"mean": 21.839538337738595, "std": 22.642394992333692},
+    "mean_alpha_sphere_radius": {"mean": 3.9125094542396113, "std": 0.15563041670463484},
+    "mean_alpha_sphere_solvent_accessibility": {"mean": 0.5324077627562146, "std": 0.08930194199795072},
+    "min_active_distance": {"mean": 19.629957627911455, "std": 22.415191252851645}
+  }
+}

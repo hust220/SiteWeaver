@@ -1,5 +1,5 @@
 package: SiteWeaver
-version: 0.1.0
+version: 0.2.0
 profiles:
   pocket:
     checkpoint: weights/ligand_free_pocket_final.ckpt
@@ -21,20 +21,8 @@ profiles:
     node_features: 14 heavy-atom graph features including pocket and annotated active context
     edge_features: 21
     checkpoint_epoch: 14
-    use_for_default_allosteric_task: false
-  allosteric_production:
-    checkpoint: weights/allosteric_i01_prs_final.ckpt
-    label: article main predicted-active cascade
-    variant: I01_NOYP_PRS
-    task: direct residue-level allosteric ranking
-    architecture: 8-layer residue GNN
-    node_features: 33 (29 base + predicted active-site probability + 3 PRS channels)
-    edge_features: 5
-    uses_ligand_free_pocket_probability: false
-    uses_ligand_free_embedding: false
-    active_context_checkpoint: weights/active_context_final.ckpt
-    prs: CA-only ProDy ANM, cutoff 15 A, gamma 1.0, 20 modes
-    checkpoint_epoch: 98
+    requires_annotated_active_sites: true
+    use_for_default_allosteric_task: true
   allosteric_pocket_rank:
     checkpoint: weights/allosteric_pocket_rank_final.ckpt
     label: SW-Allo-P/G1
@@ -43,13 +31,10 @@ profiles:
     node_features: 25
     edge_features: 22
     checkpoint_epoch: 20
-    cache_required: true
-  active_context:
-    checkpoint: weights/active_context_final.ckpt
-    task: upstream active-context model for continuous active-site context
-    architecture: 8-layer residue GNN
-    node_features: 29
-    checkpoint_epoch: 96
+    requires_annotated_active_sites: true
+    requires_fpocket: true
+    feature_statistics: configs/g1_feature_stats.json
+    cache_required: false
   cryptic_site:
     checkpoint: weights/cryptic_site_final.ckpt
     task: cryptic-site residue probability

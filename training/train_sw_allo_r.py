@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from siteweaver.cache.r0_cache_io import load_all_cached_samples
 from siteweaver.models.r0_model import HeavyAtomR0KnownActive
-from siteweaver.ranker_model import allosteric_rank_loss
+from siteweaver.rank_loss import allosteric_rank_loss
 from siteweaver.models.r0_variants import R0
 
 from _common import (

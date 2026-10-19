@@ -1,6 +1,6 @@
 {
   "package": "SiteWeaver",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "weights_are_frozen": true,
   "files": [
     {
@@ -14,18 +14,6 @@
       "sha256": "a7c4a98abd1c333471192d4480329b3b42d1a515700abcba91b212df4b1aa2fe",
       "source_profile": "active-site predictor using ligand-free pocket probability",
       "epoch": 81
-    },
-    {
-      "file": "active_context_final.ckpt",
-      "sha256": "9dadc5584746c26050133f6da7fb0704769992a4a7b477e97284ad7f78c09156",
-      "source_profile": "base-only active-context predictor",
-      "epoch": 96
-    },
-    {
-      "file": "allosteric_i01_prs_final.ckpt",
-      "sha256": "5989e73d9b7f7f3ae18b2b79bd15481531c5a989e2b9db2fcbad63c3ad83a562",
-      "source_profile": "article main I01_NOYP_PRS predicted-active allosteric cascade",
-      "epoch": 98
     },
     {
       "file": "allosteric_residue_rank_final.ckpt",

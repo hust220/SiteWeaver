@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "siteweaver"
-version = "0.1.0"
+version = "0.2.0"
 description = "Self-contained protein site prediction and pocket ranking models"
 requires-python = ">=3.10"
 readme = "README.md"
@@ -12,9 +12,12 @@ dependencies = [
   "torch>=2.0",
   "numpy>=1.24",
   "scipy>=1.10",
-  "prody>=2.4",
   "zstandard>=0.22",
 ]
+
+[project.optional-dependencies]
+prs = ["prody>=2.4"]
+training = ["pytorch-lightning>=2.0", "scikit-learn>=1.2", "wandb>=0.16"]
 
 [project.scripts]
 siteweaver = "siteweaver.cli:main"
@@ -30,4 +33,4 @@ include-package-data = true
 
 [tool.setuptools.data-files]
 "siteweaver/weights" = ["weights/*.ckpt", "weights/manifest.json"]
-"siteweaver/configs" = ["configs/*.yaml"]
+"siteweaver/configs" = ["configs/*.yaml", "configs/g1_feature_stats.json"]
